@@ -1,0 +1,12 @@
+{"rankingProblems": [
+    {"queryText": "Where can you buy cat food?",
+     "documents": [
+        {"relevance": 1, "docText": "The pet food store"},
+        {"relevance": 1, "docText": "Bicycles have two wheels"}, 
+        {"relevance": 1, "docText": "The grocery store"}, 
+        {"relevance": 1, "docText": "Cats eat cat food"}
+        ]
+    }
+    ]
+}
+    
