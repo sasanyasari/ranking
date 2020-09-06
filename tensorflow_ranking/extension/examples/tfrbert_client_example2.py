@@ -190,6 +190,24 @@ class TFRBertUtilPeter(object):
     # PJ: 
     def convert_json_to_elwc_export(self, filenameJsonIn, filenameTFRecordOut):
 
+        listToRank = self.convert_json_to_elwc(filenameJsonIn)
+
+        # (DEBUG) Uncomment to add a toy record
+        #listToRank.append( self.mkToyRankingRecord() )
+
+        # Step 3: Save ELWC
+        try:
+            with tf.io.TFRecordWriter(filenameTFRecordOut) as writer:
+                for example in listToRank * 10:
+                    writer.write(example.SerializeToString())
+        except:
+            print("convert_json_to_elwc_export: error writing ELWC file (filename = " + filenameTFRecordOut + ")")
+            exit(1)
+
+
+    # PJ: In: JSON filename
+    # Out: List of ELWC records
+    def convert_json_to_elwc(self, filenameJsonIn):
         # Step 1: Load JSON file
         listToRank = []
 #        try:
@@ -218,19 +236,7 @@ class TFRBertUtilPeter(object):
 #            print("convert_json_to_elwc_export: error loading JSON file (filename = " + filenameJsonIn + ")")
 #            exit(1)
 
-        # (DEBUG) Uncomment to add a toy record
-        #listToRank.append( self.mkToyRankingRecord() )
-
-        # Step 3: Save ELWC
-        try:
-            with tf.io.TFRecordWriter(filenameTFRecordOut) as writer:
-                for example in listToRank * 10:
-                    writer.write(example.SerializeToString())
-        except:
-            print("convert_json_to_elwc_export: error writing ELWC file (filename = " + filenameTFRecordOut + ")")
-            exit(1)
-
-
+        return listToRank
     
 
 #
@@ -256,39 +262,44 @@ elwcOut = bert_helper.convert_to_elwc(query, documents, labels, label_name)
 
 print(elwcOut)
 
+# Example of converting from JSON to ELWC
 bert_helper2 = TFRBertUtilPeter(bert_helper)
 
-filenameJsonIn = "/home/peter/github/peter-ranking/ranking/jsonInExample.json"
-filenameELWCOut = "testout.txt"
-bert_helper2.convert_json_to_elwc_export(filenameJsonIn, filenameELWCOut)
+filenameJsonIn = "/home/peter/github/peter-ranking/ranking/jsonInExample-eval.json"
+# filenameELWCOut = "eval.toy.elwc.tfrecord"
+# bert_helper2.convert_json_to_elwc_export(filenameJsonIn, filenameELWCOut)
 
-exit(1)
+# exit(1)
 
 #
 #   Main
 #
 
+elwcIn = bert_helper2.convert_json_to_elwc(filenameJsonIn)
+
 # Make example data
 #EXAMPLE_LIST_WITH_CONTEXT_PROTO = mkToyDataBert()
-EXAMPLE_LIST_WITH_CONTEXT_PROTO = elwcOut
+#EXAMPLE_LIST_WITH_CONTEXT_PROTO = elwcOut
 
-# From https://github.com/tensorflow/ranking/issues/189
-example_list_with_context_proto = EXAMPLE_LIST_WITH_CONTEXT_PROTO.SerializeToString()
-tensor_proto = tf.make_tensor_proto(example_list_with_context_proto, dtype=tf.string, shape=[1])
+for EXAMPLE_LIST_WITH_CONTEXT_PROTO in elwcIn:
 
-timeout_in_secs = 3
-request = predict_pb2.PredictRequest()
-request.inputs['input_ranking_data'].CopyFrom(tensor_proto)
-request.model_spec.signature_name = 'serving_default'   # 'serving_default' instead of 'predict', as per saved_model_cli tool (see https://medium.com/@yuu.ishikawa/how-to-show-signatures-of-tensorflow-saved-model-5ac56cf1960f )
-request.model_spec.name = 'tfrbert'
+    # From https://github.com/tensorflow/ranking/issues/189
+    example_list_with_context_proto = EXAMPLE_LIST_WITH_CONTEXT_PROTO.SerializeToString()
+    tensor_proto = tf.make_tensor_proto(example_list_with_context_proto, dtype=tf.string, shape=[1])
 
-channel = grpc.insecure_channel("0.0.0.0:8500")
-stub = prediction_service_pb2_grpc.PredictionServiceStub(channel)                            
+    timeout_in_secs = 3
+    request = predict_pb2.PredictRequest()
+    request.inputs['input_ranking_data'].CopyFrom(tensor_proto)
+    request.model_spec.signature_name = 'serving_default'   # 'serving_default' instead of 'predict', as per saved_model_cli tool (see https://medium.com/@yuu.ishikawa/how-to-show-signatures-of-tensorflow-saved-model-5ac56cf1960f )
+    request.model_spec.name = 'tfrbert'
 
-grpc_response = stub.Predict(request, timeout_in_secs)
-unpacked_grpc_response = MessageToDict(grpc_response, preserving_proto_field_name = True)
+    channel = grpc.insecure_channel("0.0.0.0:8500")
+    stub = prediction_service_pb2_grpc.PredictionServiceStub(channel)                            
 
-print("\n")
-print("Ranking output:")
-print(unpacked_grpc_response['outputs']['output']['float_val'])
+    grpc_response = stub.Predict(request, timeout_in_secs)
+    unpacked_grpc_response = MessageToDict(grpc_response, preserving_proto_field_name = True)
+
+    print("\n")
+    print("Ranking output:")
+    print(unpacked_grpc_response['outputs']['output']['float_val'])
 
