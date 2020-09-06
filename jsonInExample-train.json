@@ -1,0 +1,35 @@
+{"rankingProblems": [
+    {"queryText": "Where can you buy cat food?",
+     "documents": [
+        {"relevance": 3, "docText": "The pet food store"},
+        {"relevance": 1, "docText": "Bicycles have two wheels"}, 
+        {"relevance": 3, "docText": "The grocery store"}, 
+        {"relevance": 2, "docText": "Cats eat cat food"}
+        ]
+    },
+    {"queryText": "Where can you go swimming?",
+     "documents": [
+        {"relevance": 2, "docText": "At the lake"},
+        {"relevance": 3, "docText": "In a swimming pool"}, 
+        {"relevance": 1, "docText": "In a cloud"}, 
+        {"relevance": 1, "docText": "On a pile of rocks"},
+        {"relevance": 1, "docText": "In a garden"}        
+        ]
+    },
+    {"queryText": "What helps to build a campfire?",
+     "documents": [
+        {"relevance": 1, "docText": "Rocks"},
+        {"relevance": 2, "docText": "Tinder"}, 
+        {"relevance": 3, "docText": "Wood"}, 
+        {"relevance": 3, "docText": "Match"},
+        {"relevance": 1, "docText": "Potato"},
+        {"relevance": 1, "docText": "Can of soup"},
+        {"relevance": 1, "docText": "Marshmallow"},        
+        {"relevance": 1, "docText": "Hot dog"},
+        {"relevance": 1, "docText": "Rice"},
+        {"relevance": 1, "docText": "Pot and pan"}
+        ]
+    }
+    ]
+}
+    

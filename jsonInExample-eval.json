@@ -1,0 +1,40 @@
+{"rankingProblems": [
+    {"queryText": "Where can you buy dog food?",
+     "documents": [        
+        {"relevance": 3, "docText": "The pet food store"}, 
+        {"relevance": 1, "docText": "Cars are for driving place to place"},
+        {"relevance": 1, "docText": "Red strawberries grow on strawberry plants"},         
+        {"relevance": 2, "docText": "Dogs eat dog food"}
+        ]
+    },
+    {"queryText": "Where can you go rock climbing?",
+     "documents": [
+        {"relevance": 1, "docText": "At the lake"},
+        {"relevance": 1, "docText": "In a swimming pool"}, 
+        {"relevance": 1, "docText": "In a cloud"}, 
+        {"relevance": 1, "docText": "On a pile of rocks"},
+        {"relevance": 1, "docText": "In a garden"},
+        {"relevance": 3, "docText": "In a climbing gym"},
+        {"relevance": 3, "docText": "On a mountain cliff"}        
+        ]
+    },
+    {"queryText": "What parts are most important for a computer?",
+     "documents": [
+        {"relevance": 3, "docText": "CPU"},
+        {"relevance": 2, "docText": "Monitor"}, 
+        {"relevance": 3, "docText": "Hard drive"}, 
+        {"relevance": 2, "docText": "Printer"},
+        {"relevance": 2, "docText": "Scanner"},
+        {"relevance": 3, "docText": "Keyboard"},
+        {"relevance": 1, "docText": "Soldering iron"},        
+        {"relevance": 1, "docText": "Electronics factory"},
+        {"relevance": 1, "docText": "Tree"},
+        {"relevance": 1, "docText": "Mouse"},
+        {"relevance": 1, "docText": "Street"},
+        {"relevance": 1, "docText": "Lamp"},
+        {"relevance": 1, "docText": "Couch"}        
+        ]
+    }
+    ]
+}
+    
