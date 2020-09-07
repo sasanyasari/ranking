@@ -1,4 +1,13 @@
-# tfrbert_client_example.py
+# tfrbert_client_predict_from_json.py
+#
+# A short end-to-end example of doing prediction for ranking problems using TFR-Bert
+#
+# Cobbled together by Peter Jansen based on:
+#
+# https://github.com/tensorflow/ranking/issues/189 by Alexander Zagniotov
+# https://colab.research.google.com/github/tensorflow/ranking/blob/master/tensorflow_ranking/examples/handling_sparse_features.ipynb#scrollTo=eE7hpEBBykVS
+# https://github.com/tensorflow/ranking/blob/master/tensorflow_ranking/extension/examples/tfrbert_example_test.py    
+# and other documentation...
 
 from absl import flags
 import tensorflow as tf
@@ -11,11 +20,11 @@ from google.protobuf import text_format
 from google.protobuf.json_format import MessageToDict
 
 from tensorflow_ranking.extension import tfrbert
+from functools import reduce
 import json
 import copy
-
-# Put together from https://colab.research.google.com/github/tensorflow/ranking/blob/master/tensorflow_ranking/examples/handling_sparse_features.ipynb#scrollTo=eE7hpEBBykVS
-# and based on the unit test at https://github.com/tensorflow/ranking/blob/master/tensorflow_ranking/extension/examples/tfrbert_example_test.py    
+import argparse
+import time
 
 
 class TFRBertUtilJSON(object):
@@ -65,34 +74,34 @@ class TFRBertUtilJSON(object):
         # Step 1: Load JSON file
         listToRankELWC = []
         listJsonRaw = []
-#        try:
-        with open(filenameJsonIn) as json_file:
-            # Load whole JSON file
-            data = json.load(json_file)
+        try:
+            with open(filenameJsonIn) as json_file:
+                # Load whole JSON file
+                data = json.load(json_file)
 
-            # Parse each record
-            for rankingProblem in data['rankingProblems']:
-                labels = []
-                docTexts = []
+                # Parse each record
+                for rankingProblem in data['rankingProblems']:
+                    labels = []
+                    docTexts = []
 
-                queryText = rankingProblem['queryText']
-                documents = rankingProblem['documents']
-                for document in documents:
-                    docText = document['docText']
-                    docRel = document['relevance']      # Convert to int?
+                    queryText = rankingProblem['queryText']
+                    documents = rankingProblem['documents']
+                    for document in documents:
+                        docText = document['docText']
+                        docRel = document['relevance']      # Convert to int?
 
-                    labels.append(docRel)
-                    docTexts.append(docText)
+                        labels.append(docRel)
+                        docTexts.append(docText)
 
-                # Step 1A: Convert this record to ELWC
-                elwcOut = self.TFRBertUtilHelper.convert_to_elwc(queryText, docTexts, labels, label_name="relevance")
-                listToRankELWC.append(elwcOut)
-                # Step 1B: Also store the raw record, for exporting output in the same format it was read in
-                listJsonRaw.append(rankingProblem)
+                    # Step 1A: Convert this record to ELWC
+                    elwcOut = self.TFRBertUtilHelper.convert_to_elwc(queryText, docTexts, labels, label_name="relevance")
+                    listToRankELWC.append(elwcOut)
+                    # Step 1B: Also store the raw record, for exporting output in the same format it was read in
+                    listJsonRaw.append(rankingProblem)
 
-#        except:
-#            print("convert_json_to_elwc_export: error loading JSON file (filename = " + filenameJsonIn + ")")
-#            exit(1)
+        except:
+            print("convert_json_to_elwc_export: error loading JSON file (filename = " + filenameJsonIn + ")")
+            exit(1)
 
         return (listToRankELWC, listJsonRaw)
         
@@ -152,19 +161,33 @@ class TFRBertClient(object):
     # In: Parallel lists of ranking problems in ELWC and JSON format
     # Out: list of ranking problems in JSON format, with document scores from the model added, and documents sorted in descending order based on docScores. 
     def generatePredictionsList(self, rankingProblemsELWC, rankingProblemsJSON):
-        rankingProblemsOut = []
+        rankingProblemsOut = []        
 
+        print("")
         # Iterate through each ranking problem, generating document scores
         for idx in range(0, len(rankingProblemsELWC)):
+            percentCompleteStr = "{:.2f}".format(float(idx+1) * 100 / float(len(rankingProblemsELWC)))
+            print ("Predicting " + str(idx+1) + " / " + str(len(rankingProblemsELWC)) + " (" + percentCompleteStr + "%)")
             rankingProblemsOut.append( self.generatePredictions(rankingProblemsELWC[idx], rankingProblemsJSON[idx]) )
+
+        print("")
 
         return rankingProblemsOut
     
 
     def exportRankingOutput(self, filenameJSONOut, rankingProblemOutputJSON):
+        print(" * exportRankingOutput(): Exporting scores to JSON (" + filenameJSONOut + ")")
+
+        # Place list of ranking problems in an object under the key 'rankingProblemsOutput'
         dataOut = {"rankingProblemsOutput": rankingProblemOutputJSON}
-        strOut = json.dumps(dataOut, indent=4)
-        print(strOut)
+
+        # (DEBUG) Output JSON to console
+        # strOut = json.dumps(dataOut, indent=4)
+        # print(strOut)
+
+        # Output JSON to file
+        with open(filenameJSONOut, 'w') as outfile:
+            json.dump(dataOut, outfile, indent=4)
 
 
 
@@ -183,41 +206,59 @@ def create_tfrbert_util_with_vocab(bertMaxSeqLength, bertVocabFile, do_lower_cas
             bert_vocab_file=bertVocabFile,
             do_lower_case=do_lower_case)
 
+# Converts a Time to a human-readable format
+# from https://stackoverflow.com/questions/1557571/how-do-i-get-time-of-a-python-programs-execution
+def secondsToStr(t):
+    return "%d:%02d:%02d.%03d" % \
+        reduce(lambda ll,b : divmod(ll[0],b) + ll[1:],
+            [(t*1000,),1000,60,60])
+
 #
 #   Main
 #
 
-if __name__ == "__main__":
+def main():
+    # Get start time of execution
+    startTime = time.time()
 
-    # Parameters
-    bertVocabFilename = "/home/peter/github/tensorflow/ranking/uncased_L-4_H-256_A-4_TF2/vocab.txt"
-    do_lower_case = True
+    # Parse command line arguments
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--vocab_file", type=str, required=True, help="/path/to/bert_model/vocab.txt")
+    parser.add_argument("--sequence_length", type=int, required=True, help="typically 128, 256, 512")    
+    parser.add_argument("--input_file", type=str, required=True, help="JSON input filename (e.g. train.json)")
+    parser.add_argument("--output_file", type=str, required=True, help="JSON output filename (e.g. train.scoresOut.json)")
+
+    parser.add_argument("--do_lower_case", action="store_true", help="Set for uncased models, otherwise do not include")
+
+    args = parser.parse_args()
+    
+    # Console output
+    print(" * Generating predictions for JSON ranking problems (filename: " + args.input_file + ")")    
 
     # Create helpers
-    bert_helper = create_tfrbert_util_with_vocab(128, bertVocabFilename, do_lower_case)
+    bert_helper = create_tfrbert_util_with_vocab(args.sequence_length, args.vocab_file, args.do_lower_case)
     bert_helper_json = TFRBertUtilJSON(bert_helper)
 
-    # Example of converting from JSON to ELWC
-    #filenameJsonIn = "/home/peter/github/peter-ranking/ranking/jsonInExample-eval.json"
-    # filenameELWCOut = "eval.toy.elwc.tfrecord"
-    # bert_helper_json.convert_json_to_elwc_export(filenameJsonIn, filenameELWCOut)
+    # Convert the JSON of input ranking problems into ELWC
+    (rankingProblemsELWC, rankingProblemsJSON) = bert_helper_json.convert_json_to_elwc(args.input_file)
 
-    # exit(1)
-
-
-
-    filenameJsonIn = "/home/peter/github/peter-ranking/ranking/jsonInExample-train.json"
-    (rankingProblemsELWC, rankingProblemsJSON) = bert_helper_json.convert_json_to_elwc(filenameJsonIn)
-
+    # Create an instance of the TFRBert client, to request predictions from the Tensorflow Serving model server
     tfrBertClient = TFRBertClient(grpcChannel = "0.0.0.0:8500", modelName = "tfrbert", servingSignatureName = "serving_default", timeoutInSecs = 3)
-    rankingProblemsOut = tfrBertClient.generatePredictionsList(rankingProblemsELWC, rankingProblemsJSON)
 
-    print("Input filename: " + filenameJsonIn)
+    # Generate predictions for each ranking problem in the list of ranking problems in the JSON file
+    rankingProblemsOut = tfrBertClient.generatePredictionsList(rankingProblemsELWC, rankingProblemsJSON) 
 
-    for idx in range(0, len(rankingProblemsOut)):    
-        print("Ranking Problem " + str(idx) + ":\n")
-        print(rankingProblemsOut[idx])
-        print("\n")
+    # (DEBUG) Display the results of the ranking problems to the console
+    # for idx in range(0, len(rankingProblemsOut)):    
+    #     print("Ranking Problem " + str(idx) + ":\n")
+    #     print(rankingProblemsOut[idx])
+    #     print("\n")
 
+    # Export ranked results to JSON file
+    tfrBertClient.exportRankingOutput(args.output_file, rankingProblemsOut)    
 
-    tfrBertClient.exportRankingOutput("", rankingProblemsOut)
+    # Display total execution time
+    print(" * Total execution time: " + secondsToStr(time.time() - startTime))
+
+if __name__ == "__main__":
+    main()
