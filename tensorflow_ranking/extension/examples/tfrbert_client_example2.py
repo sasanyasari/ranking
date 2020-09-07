@@ -176,7 +176,8 @@ class TFRBertUtilPeter(object):
     def __init__(self, TFRBertUtil):
         self.TFRBertUtilHelper = TFRBertUtil        
 
-    # PJ: Make toy data
+    # Helper function for making toy data
+    # Out: Returns toy ranking data data in ELWC format
     def mkToyRankingRecord(self):
         query = "Where can you buy cat food?"
         documents = ["The pet food store", "Bicycles have two wheels", "The grocery store", "Cats eat cat food"]
@@ -187,16 +188,14 @@ class TFRBertUtilPeter(object):
         return elwcOut
 
 
-    # PJ: 
-    # Out: creates TFrecord output file, returns list of ranking problems read in from JSON
+    # Conversion function for converting easily-read JSON into TFR-Bert's ELWC format, and exporting to file
+    # In: filename of JSON with ranking problems (see example json files for output)
+    # Out: creates TFrecord output file, also returns list of ranking problems read in from JSON
     def convert_json_to_elwc_export(self, filenameJsonIn, filenameTFRecordOut):
-
+        # Step 1: Convert JSON to ELWC
         (listToRank, listJsonRaw) = self.convert_json_to_elwc(filenameJsonIn)
 
-        # (DEBUG) Uncomment to add a toy record
-        #listToRank.append( self.mkToyRankingRecord() )
-
-        # Step 3: Save ELWC
+        # Step 2: Save ELWC to file
         try:
             with tf.io.TFRecordWriter(filenameTFRecordOut) as writer:
                 for example in listToRank * 10:
@@ -205,9 +204,11 @@ class TFRBertUtilPeter(object):
             print("convert_json_to_elwc_export: error writing ELWC file (filename = " + filenameTFRecordOut + ")")
             exit(1)
         
+        # Step 3: Also return ranking problem in JSON format, for use in scoring/exporting
         return listJsonRaw
 
 
+    # Conversion function for converting easily-read JSON into TFR-Bert's ELWC format
     # PJ: In: JSON filename
     # Out: List of ELWC records, list of original JSON records
     def convert_json_to_elwc(self, filenameJsonIn):
@@ -246,6 +247,68 @@ class TFRBertUtilPeter(object):
         return (listToRankELWC, listJsonRaw)
     
 
+class TFRBertClient(object):    
+    # Default/Example values
+    # self.grpcChannel = "0.0.0.0:8500"                   # from the Tensorflow Serving server
+    # self.modelName = "tfrbert"
+    # self.servingSignatureName = "serving_default"       # 'serving_default' instead of 'predict', as per saved_model_cli tool (see https://medium.com/@yuu.ishikawa/how-to-show-signatures-of-tensorflow-saved-model-5ac56cf1960f )    
+    # self.timeoutInSecs = 3
+
+
+    def __init__(self, grpcChannel, modelName, servingSignatureName, timeoutInSecs):        
+        self.grpcChannel = grpcChannel
+        self.modelName = modelName
+        self.servingSignatureName = servingSignatureName        
+        self.timeoutInSecs = timeoutInSecs     
+
+
+    # Send a gRPC request to the Tensorflow Serving model server to generate predictions for a single ranking problem
+    # Based on https://github.com/tensorflow/ranking/issues/189
+    def generatePredictions(self, rankingProblemELWC, rankingProblemJSON):                
+        # Pack problem
+        example_list_with_context_proto = rankingProblemELWC.SerializeToString()
+        tensor_proto = tf.make_tensor_proto(example_list_with_context_proto, dtype=tf.string, shape=[1])
+        
+        # Set up request to prediction server
+        request = predict_pb2.PredictRequest()
+        request.inputs['input_ranking_data'].CopyFrom(tensor_proto)
+        request.model_spec.signature_name = self.servingSignatureName   
+        request.model_spec.name = self.modelName
+        channel = grpc.insecure_channel(self.grpcChannel)
+        stub = prediction_service_pb2_grpc.PredictionServiceStub(channel)                            
+
+        # Make prediction request and get response
+        grpc_response = stub.Predict(request, self.timeoutInSecs)
+        unpacked_grpc_response = MessageToDict(grpc_response, preserving_proto_field_name = True)
+
+        # Add model's ranking scores to each document
+        docScores = unpacked_grpc_response['outputs']['output']['float_val']
+        for docIdx in range(0, len(rankingProblemJSON['documents'])):
+            rankingProblemJSON['documents'][docIdx]['score'] = docScores[docIdx]
+
+        # Sort documents in descending order based on docScore
+        rankingProblemJSON['documents'].sort(key=lambda x:x['score'], reverse=True)
+
+        #(DEBUG) Print out ranking problem with scores added to documents
+        #print(rankingProblemJSON)
+
+        # Return ranking problem with document scores added
+        return rankingProblemsJSON
+        
+
+    # In: Parallel lists of ranking problems in ELWC and JSON format
+    # Out: list of ranking problems in JSON format, with document scores from the model added, and documents sorted in descending order based on docScores. 
+    def generatePredictionsList(self, rankingProblemsELWC, rankingProblemsJSON):
+        rankingProblemsOut = []
+
+        # Iterate through each ranking problem, generating document scores
+        for idx in range(0, len(rankingProblemsELWC)):
+            rankingProblemsOut.append( self.generatePredictions(rankingProblemsELWC[idx], rankingProblemsJSON[idx]) )
+
+        return rankingProblemsOut
+
+
+
 #
 #   Supporting Functions
 #
@@ -283,48 +346,55 @@ bert_helper2 = TFRBertUtilPeter(bert_helper)
 #
 
 filenameJsonIn = "/home/peter/github/peter-ranking/ranking/jsonInExample-train.json"
-(elwcIn, rankingProblemsIn) = bert_helper2.convert_json_to_elwc(filenameJsonIn)
+(rankingProblemsELWC, rankingProblemsJSON) = bert_helper2.convert_json_to_elwc(filenameJsonIn)
+
+tfrBertClient = TFRBertClient(grpcChannel = "0.0.0.0:8500", modelName = "tfrbert", servingSignatureName = "serving_default", timeoutInSecs = 3)
+tfrBertClient.generatePredictionsList(rankingProblemsELWC, rankingProblemsJSON)
+
+for rankingProblem in rankingProblemsJSON:
+    print(rankingProblem)
+    print("\n")
 
 # Make example data
 #EXAMPLE_LIST_WITH_CONTEXT_PROTO = mkToyDataBert()
 #EXAMPLE_LIST_WITH_CONTEXT_PROTO = elwcOut
 
-for i in range(0, len(elwcIn)):
-    EXAMPLE_LIST_WITH_CONTEXT_PROTO = elwcIn[i]
-    rankingProblem = rankingProblemsIn[i]
+# for i in range(0, len(elwcIn)):
+#     EXAMPLE_LIST_WITH_CONTEXT_PROTO = elwcIn[i]
+#     rankingProblem = rankingProblemsIn[i]
 
-    print(rankingProblem)
+#     print(rankingProblem)
 
-    # From https://github.com/tensorflow/ranking/issues/189
-    example_list_with_context_proto = EXAMPLE_LIST_WITH_CONTEXT_PROTO.SerializeToString()
-    tensor_proto = tf.make_tensor_proto(example_list_with_context_proto, dtype=tf.string, shape=[1])
+#     # From https://github.com/tensorflow/ranking/issues/189
+#     example_list_with_context_proto = EXAMPLE_LIST_WITH_CONTEXT_PROTO.SerializeToString()
+#     tensor_proto = tf.make_tensor_proto(example_list_with_context_proto, dtype=tf.string, shape=[1])
 
-    timeout_in_secs = 3
-    request = predict_pb2.PredictRequest()
-    request.inputs['input_ranking_data'].CopyFrom(tensor_proto)
-    request.model_spec.signature_name = 'serving_default'   # 'serving_default' instead of 'predict', as per saved_model_cli tool (see https://medium.com/@yuu.ishikawa/how-to-show-signatures-of-tensorflow-saved-model-5ac56cf1960f )
-    request.model_spec.name = 'tfrbert'
+#     timeout_in_secs = 3
+#     request = predict_pb2.PredictRequest()
+#     request.inputs['input_ranking_data'].CopyFrom(tensor_proto)
+#     request.model_spec.signature_name = 'serving_default'   # 'serving_default' instead of 'predict', as per saved_model_cli tool (see https://medium.com/@yuu.ishikawa/how-to-show-signatures-of-tensorflow-saved-model-5ac56cf1960f )
+#     request.model_spec.name = 'tfrbert'
 
-    channel = grpc.insecure_channel("0.0.0.0:8500")
-    stub = prediction_service_pb2_grpc.PredictionServiceStub(channel)                            
+#     channel = grpc.insecure_channel("0.0.0.0:8500")
+#     stub = prediction_service_pb2_grpc.PredictionServiceStub(channel)                            
 
-    grpc_response = stub.Predict(request, timeout_in_secs)
-    unpacked_grpc_response = MessageToDict(grpc_response, preserving_proto_field_name = True)
+#     grpc_response = stub.Predict(request, timeout_in_secs)
+#     unpacked_grpc_response = MessageToDict(grpc_response, preserving_proto_field_name = True)
 
-    print("\n")
-    print("Ranking output:")
-    print(unpacked_grpc_response['outputs']['output']['float_val'])
-    print(unpacked_grpc_response['outputs']['output'])
-    print(unpacked_grpc_response['outputs'])
+#     print("\n")
+#     print("Ranking output:")
+#     print(unpacked_grpc_response['outputs']['output']['float_val'])
+#     print(unpacked_grpc_response['outputs']['output'])
+#     print(unpacked_grpc_response['outputs'])
 
-    # Add model's ranking scores to documents
-    docScores = unpacked_grpc_response['outputs']['output']['float_val']
-    for docIdx in range(0, len(rankingProblem['documents'])):
-        rankingProblem['documents'][docIdx]['score'] = docScores[docIdx]
+#     # Add model's ranking scores to documents
+#     docScores = unpacked_grpc_response['outputs']['output']['float_val']
+#     for docIdx in range(0, len(rankingProblem['documents'])):
+#         rankingProblem['documents'][docIdx]['score'] = docScores[docIdx]
 
-    # Sort documents in descending order
-    rankingProblem['documents'].sort(key=lambda x:x['score'], reverse=True)
+#     # Sort documents in descending order
+#     rankingProblem['documents'].sort(key=lambda x:x['score'], reverse=True)
 
-    print(rankingProblem)
+#     print(rankingProblem)
 
 
