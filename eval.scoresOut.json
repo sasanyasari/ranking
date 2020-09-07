@@ -1,0 +1,139 @@
+{
+    "rankingProblemsOutput": [
+        {
+            "queryText": "Where can you buy dog food?",
+            "documents": [
+                {
+                    "relevance": 3,
+                    "docText": "The pet food store",
+                    "score": 0.4045086
+                },
+                {
+                    "relevance": 1,
+                    "docText": "Cars are for driving place to place",
+                    "score": -0.087259516
+                },
+                {
+                    "relevance": 2,
+                    "docText": "Dogs eat dog food",
+                    "score": -0.14085332
+                },
+                {
+                    "relevance": 1,
+                    "docText": "Red strawberries grow on strawberry plants",
+                    "score": -0.97852093
+                }
+            ]
+        },
+        {
+            "queryText": "Where can you go rock climbing?",
+            "documents": [
+                {
+                    "relevance": 3,
+                    "docText": "In a climbing gym",
+                    "score": 0.14498216
+                },
+                {
+                    "relevance": 1,
+                    "docText": "In a swimming pool",
+                    "score": 0.14445521
+                },
+                {
+                    "relevance": 1,
+                    "docText": "At the lake",
+                    "score": -0.2063725
+                },
+                {
+                    "relevance": 3,
+                    "docText": "On a mountain cliff",
+                    "score": -0.23254125
+                },
+                {
+                    "relevance": 1,
+                    "docText": "On a pile of rocks",
+                    "score": -0.59751
+                },
+                {
+                    "relevance": 1,
+                    "docText": "In a cloud",
+                    "score": -0.73646384
+                },
+                {
+                    "relevance": 1,
+                    "docText": "In a garden",
+                    "score": -0.77151793
+                }
+            ]
+        },
+        {
+            "queryText": "What parts are most important for a computer?",
+            "documents": [
+                {
+                    "relevance": 3,
+                    "docText": "Hard drive",
+                    "score": -0.16578771
+                },
+                {
+                    "relevance": 3,
+                    "docText": "CPU",
+                    "score": -0.27822962
+                },
+                {
+                    "relevance": 3,
+                    "docText": "Keyboard",
+                    "score": -0.34836236
+                },
+                {
+                    "relevance": 2,
+                    "docText": "Printer",
+                    "score": -0.44954214
+                },
+                {
+                    "relevance": 1,
+                    "docText": "Soldering iron",
+                    "score": -0.44981638
+                },
+                {
+                    "relevance": 2,
+                    "docText": "Scanner",
+                    "score": -0.512414
+                },
+                {
+                    "relevance": 1,
+                    "docText": "Street",
+                    "score": -0.68731207
+                },
+                {
+                    "relevance": 1,
+                    "docText": "Mouse",
+                    "score": -0.696253
+                },
+                {
+                    "relevance": 2,
+                    "docText": "Monitor",
+                    "score": -0.74959594
+                },
+                {
+                    "relevance": 1,
+                    "docText": "Lamp",
+                    "score": -0.9156646
+                },
+                {
+                    "relevance": 1,
+                    "docText": "Tree",
+                    "score": -0.9277943
+                },
+                {
+                    "relevance": 1,
+                    "docText": "Couch",
+                    "score": -0.9586045
+                },
+                {
+                    "relevance": 1,
+                    "docText": "Electronics factory",
+                    "score": -1.0005659
+                }
+            ]
+        }
+    ]
+}

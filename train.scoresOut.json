@@ -1,0 +1,114 @@
+{
+    "rankingProblemsOutput": [
+        {
+            "queryText": "Where can you buy cat food?",
+            "documents": [
+                {
+                    "relevance": 3,
+                    "docText": "The grocery store",
+                    "score": 0.44388255
+                },
+                {
+                    "relevance": 3,
+                    "docText": "The pet food store",
+                    "score": 0.40264943
+                },
+                {
+                    "relevance": 2,
+                    "docText": "Cats eat cat food",
+                    "score": -0.15662411
+                },
+                {
+                    "relevance": 1,
+                    "docText": "Bicycles have two wheels",
+                    "score": -0.8667503
+                }
+            ]
+        },
+        {
+            "queryText": "Where can you go swimming?",
+            "documents": [
+                {
+                    "relevance": 3,
+                    "docText": "In a swimming pool",
+                    "score": 0.48036778
+                },
+                {
+                    "relevance": 2,
+                    "docText": "At the lake",
+                    "score": -0.10280942
+                },
+                {
+                    "relevance": 1,
+                    "docText": "On a pile of rocks",
+                    "score": -0.7149895
+                },
+                {
+                    "relevance": 1,
+                    "docText": "In a cloud",
+                    "score": -0.7245462
+                },
+                {
+                    "relevance": 1,
+                    "docText": "In a garden",
+                    "score": -0.75645095
+                }
+            ]
+        },
+        {
+            "queryText": "What helps to build a campfire?",
+            "documents": [
+                {
+                    "relevance": 3,
+                    "docText": "Wood",
+                    "score": -0.008856705
+                },
+                {
+                    "relevance": 3,
+                    "docText": "Match",
+                    "score": -0.05323608
+                },
+                {
+                    "relevance": 2,
+                    "docText": "Tinder",
+                    "score": -0.42123765
+                },
+                {
+                    "relevance": 1,
+                    "docText": "Pot and pan",
+                    "score": -1.0901607
+                },
+                {
+                    "relevance": 1,
+                    "docText": "Rocks",
+                    "score": -1.1488856
+                },
+                {
+                    "relevance": 1,
+                    "docText": "Rice",
+                    "score": -1.1492822
+                },
+                {
+                    "relevance": 1,
+                    "docText": "Can of soup",
+                    "score": -1.154706
+                },
+                {
+                    "relevance": 1,
+                    "docText": "Hot dog",
+                    "score": -1.1791945
+                },
+                {
+                    "relevance": 1,
+                    "docText": "Potato",
+                    "score": -1.2208372
+                },
+                {
+                    "relevance": 1,
+                    "docText": "Marshmallow",
+                    "score": -1.2553226
+                }
+            ]
+        }
+    ]
+}
