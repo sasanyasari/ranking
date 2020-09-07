@@ -3,7 +3,7 @@
 from tensorflow_ranking.extension import tfrbert
 import json
 import copy
-import tfrbert_client_json 
+import tfrbert_client_predict_from_json
 import argparse
 
 #
@@ -23,8 +23,8 @@ def main():
     args = parser.parse_args()
 
     # Create helpers
-    bert_helper = tfrbert_client_json.create_tfrbert_util_with_vocab(args.sequence_length, args.vocab_file, args.do_lower_case)
-    bert_helper_json = tfrbert_client_json.TFRBertUtilJSON(bert_helper)
+    bert_helper = tfrbert_client_predict_from_json.create_tfrbert_util_with_vocab(args.sequence_length, args.vocab_file, args.do_lower_case)
+    bert_helper_json = tfrbert_client_predict_from_json.TFRBertUtilJSON(bert_helper)
 
     # User output
     print("Utility to convert between JSON and ELWC for TFR-Bert")
