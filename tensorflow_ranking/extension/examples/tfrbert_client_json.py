@@ -187,35 +187,37 @@ def create_tfrbert_util_with_vocab(bertMaxSeqLength, bertVocabFile, do_lower_cas
 #   Main
 #
 
-# Parameters
-bertVocabFilename = "/home/peter/github/tensorflow/ranking/uncased_L-4_H-256_A-4_TF2/vocab.txt"
-do_lower_case = True
+if __name__ == "__main__":
 
-# Create helpers
-bert_helper = create_tfrbert_util_with_vocab(128, bertVocabFilename, do_lower_case)
-bert_helper_json = TFRBertUtilJSON(bert_helper)
+    # Parameters
+    bertVocabFilename = "/home/peter/github/tensorflow/ranking/uncased_L-4_H-256_A-4_TF2/vocab.txt"
+    do_lower_case = True
 
-# Example of converting from JSON to ELWC
-#filenameJsonIn = "/home/peter/github/peter-ranking/ranking/jsonInExample-eval.json"
-# filenameELWCOut = "eval.toy.elwc.tfrecord"
-# bert_helper_json.convert_json_to_elwc_export(filenameJsonIn, filenameELWCOut)
+    # Create helpers
+    bert_helper = create_tfrbert_util_with_vocab(128, bertVocabFilename, do_lower_case)
+    bert_helper_json = TFRBertUtilJSON(bert_helper)
 
-# exit(1)
+    # Example of converting from JSON to ELWC
+    #filenameJsonIn = "/home/peter/github/peter-ranking/ranking/jsonInExample-eval.json"
+    # filenameELWCOut = "eval.toy.elwc.tfrecord"
+    # bert_helper_json.convert_json_to_elwc_export(filenameJsonIn, filenameELWCOut)
 
-
-
-filenameJsonIn = "/home/peter/github/peter-ranking/ranking/jsonInExample-train.json"
-(rankingProblemsELWC, rankingProblemsJSON) = bert_helper_json.convert_json_to_elwc(filenameJsonIn)
-
-tfrBertClient = TFRBertClient(grpcChannel = "0.0.0.0:8500", modelName = "tfrbert", servingSignatureName = "serving_default", timeoutInSecs = 3)
-rankingProblemsOut = tfrBertClient.generatePredictionsList(rankingProblemsELWC, rankingProblemsJSON)
-
-print("Input filename: " + filenameJsonIn)
-
-for idx in range(0, len(rankingProblemsOut)):    
-    print("Ranking Problem " + str(idx) + ":\n")
-    print(rankingProblemsOut[idx])
-    print("\n")
+    # exit(1)
 
 
-tfrBertClient.exportRankingOutput("", rankingProblemsOut)
+
+    filenameJsonIn = "/home/peter/github/peter-ranking/ranking/jsonInExample-train.json"
+    (rankingProblemsELWC, rankingProblemsJSON) = bert_helper_json.convert_json_to_elwc(filenameJsonIn)
+
+    tfrBertClient = TFRBertClient(grpcChannel = "0.0.0.0:8500", modelName = "tfrbert", servingSignatureName = "serving_default", timeoutInSecs = 3)
+    rankingProblemsOut = tfrBertClient.generatePredictionsList(rankingProblemsELWC, rankingProblemsJSON)
+
+    print("Input filename: " + filenameJsonIn)
+
+    for idx in range(0, len(rankingProblemsOut)):    
+        print("Ranking Problem " + str(idx) + ":\n")
+        print(rankingProblemsOut[idx])
+        print("\n")
+
+
+    tfrBertClient.exportRankingOutput("", rankingProblemsOut)
