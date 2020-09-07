@@ -17,8 +17,8 @@ tensorflow_ranking/extension/examples:tfrbert_example_py_binary && \
    --model_dir="${OUTPUT_DIR}" \
    --list_size=15 \
    --loss=softmax_loss \
-   --train_batch_size=8 \
-   --eval_batch_size=8 \
+   --train_batch_size=1 \
+   --eval_batch_size=1 \
    --learning_rate=1e-5 \
    --num_train_steps=5000 \
    --num_eval_steps=10 \

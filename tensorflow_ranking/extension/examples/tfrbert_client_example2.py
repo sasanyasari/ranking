@@ -188,9 +188,10 @@ class TFRBertUtilPeter(object):
 
 
     # PJ: 
+    # Out: creates TFrecord output file, returns list of ranking problems read in from JSON
     def convert_json_to_elwc_export(self, filenameJsonIn, filenameTFRecordOut):
 
-        listToRank = self.convert_json_to_elwc(filenameJsonIn)
+        (listToRank, listJsonRaw) = self.convert_json_to_elwc(filenameJsonIn)
 
         # (DEBUG) Uncomment to add a toy record
         #listToRank.append( self.mkToyRankingRecord() )
@@ -203,13 +204,16 @@ class TFRBertUtilPeter(object):
         except:
             print("convert_json_to_elwc_export: error writing ELWC file (filename = " + filenameTFRecordOut + ")")
             exit(1)
+        
+        return listJsonRaw
 
 
     # PJ: In: JSON filename
-    # Out: List of ELWC records
+    # Out: List of ELWC records, list of original JSON records
     def convert_json_to_elwc(self, filenameJsonIn):
         # Step 1: Load JSON file
-        listToRank = []
+        listToRankELWC = []
+        listJsonRaw = []
 #        try:
         with open(filenameJsonIn) as json_file:
             # Load whole JSON file
@@ -231,12 +235,15 @@ class TFRBertUtilPeter(object):
 
                 # Step 1A: Convert this record to ELWC
                 elwcOut = self.TFRBertUtilHelper.convert_to_elwc(queryText, docTexts, labels, label_name="relevance")
-                listToRank.append(elwcOut)
+                listToRankELWC.append(elwcOut)
+                # Step 1B: Also store the raw record, for exporting output in the same format it was read in
+                listJsonRaw.append(rankingProblem)
+
 #        except:
 #            print("convert_json_to_elwc_export: error loading JSON file (filename = " + filenameJsonIn + ")")
 #            exit(1)
 
-        return listToRank
+        return (listToRankELWC, listJsonRaw)
     
 
 #
@@ -265,7 +272,7 @@ print(elwcOut)
 # Example of converting from JSON to ELWC
 bert_helper2 = TFRBertUtilPeter(bert_helper)
 
-filenameJsonIn = "/home/peter/github/peter-ranking/ranking/jsonInExample-eval.json"
+#filenameJsonIn = "/home/peter/github/peter-ranking/ranking/jsonInExample-eval.json"
 # filenameELWCOut = "eval.toy.elwc.tfrecord"
 # bert_helper2.convert_json_to_elwc_export(filenameJsonIn, filenameELWCOut)
 
@@ -275,13 +282,18 @@ filenameJsonIn = "/home/peter/github/peter-ranking/ranking/jsonInExample-eval.js
 #   Main
 #
 
-elwcIn = bert_helper2.convert_json_to_elwc(filenameJsonIn)
+filenameJsonIn = "/home/peter/github/peter-ranking/ranking/jsonInExample-train.json"
+(elwcIn, rankingProblemsIn) = bert_helper2.convert_json_to_elwc(filenameJsonIn)
 
 # Make example data
 #EXAMPLE_LIST_WITH_CONTEXT_PROTO = mkToyDataBert()
 #EXAMPLE_LIST_WITH_CONTEXT_PROTO = elwcOut
 
-for EXAMPLE_LIST_WITH_CONTEXT_PROTO in elwcIn:
+for i in range(0, len(elwcIn)):
+    EXAMPLE_LIST_WITH_CONTEXT_PROTO = elwcIn[i]
+    rankingProblem = rankingProblemsIn[i]
+
+    print(rankingProblem)
 
     # From https://github.com/tensorflow/ranking/issues/189
     example_list_with_context_proto = EXAMPLE_LIST_WITH_CONTEXT_PROTO.SerializeToString()
@@ -302,4 +314,17 @@ for EXAMPLE_LIST_WITH_CONTEXT_PROTO in elwcIn:
     print("\n")
     print("Ranking output:")
     print(unpacked_grpc_response['outputs']['output']['float_val'])
+    print(unpacked_grpc_response['outputs']['output'])
+    print(unpacked_grpc_response['outputs'])
+
+    # Add model's ranking scores to documents
+    docScores = unpacked_grpc_response['outputs']['output']['float_val']
+    for docIdx in range(0, len(rankingProblem['documents'])):
+        rankingProblem['documents'][docIdx]['score'] = docScores[docIdx]
+
+    # Sort documents in descending order
+    rankingProblem['documents'].sort(key=lambda x:x['score'], reverse=True)
+
+    print(rankingProblem)
+
 

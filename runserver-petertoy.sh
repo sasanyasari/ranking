@@ -1,6 +1,6 @@
 #!/bin/bash
 #export MODEL_DIR=/tmp/output/servetest-model/export/latest_model/
-export MODEL_DIR=/tmp/tfr/model-petertoy/export/latest_model/
+export MODEL_DIR=/tmp/tfr/model-petertoy-bertbase/export/latest_model/
 #export MODEL_DIR=/home/peter/github/tensorflow/tensorflow_ranking_model/1599246704/
 #export MODEL_DIR=/home/peter/github/tensorflow/tensorflow_ranking_model
 #export MODEL_DIR=/home/peter/github/tensorflow/
