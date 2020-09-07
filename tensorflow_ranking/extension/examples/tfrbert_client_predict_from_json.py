@@ -231,6 +231,7 @@ def main():
     parser.add_argument("--do_lower_case", action="store_true", help="Set for uncased models, otherwise do not include")
 
     args = parser.parse_args()
+    print(" * Running with arguments: " + str(args))
     
     # Console output
     print(" * Generating predictions for JSON ranking problems (filename: " + args.input_file + ")")    

@@ -1,6 +1,4 @@
 #!/bin/bash
-
-#BERT_DIR="/tmp/bert/uncased_L-12_H-768_A-12"  && \
 #BERT_DIR="/home/peter/github/tensorflow/ranking/uncased_L-4_H-256_A-4_TF2"  && \
 BERT_DIR="/home/peter/github/tensorflow/ranking/uncased_L-12_H-768_A-12_TF2"  && \
 OUTPUT_DIR="/tmp/tfr/model-petertoy-bertbase/" && \
@@ -20,7 +18,7 @@ tensorflow_ranking/extension/examples:tfrbert_example_py_binary && \
    --train_batch_size=1 \
    --eval_batch_size=1 \
    --learning_rate=1e-5 \
-   --num_train_steps=5000 \
+   --num_train_steps=500 \
    --num_eval_steps=10 \
    --checkpoint_secs=500 \
    --num_checkpoints=2
