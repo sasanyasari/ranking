@@ -133,7 +133,7 @@ class TFRBertClient(object):
         
         # Set up request to prediction server
         request = predict_pb2.PredictRequest()
-        request.inputs['input_ranking_data'].CopyFrom(tensor_proto)
+        request.inputs['inputs'].CopyFrom(tensor_proto)
         request.model_spec.signature_name = self.servingSignatureName   
         request.model_spec.name = self.modelName
         channel = grpc.insecure_channel(self.grpcChannel)
@@ -144,7 +144,7 @@ class TFRBertClient(object):
         unpacked_grpc_response = MessageToDict(grpc_response, preserving_proto_field_name = True)
 
         # Add model's ranking scores to each document
-        docScores = unpacked_grpc_response['outputs']['output']['float_val']
+        docScores = unpacked_grpc_response['outputs']['outputs']['float_val']
         for docIdx in range(0, len(rankingProblemJSON['documents'])):
             rankingProblemJSON['documents'][docIdx]['score'] = docScores[docIdx]
 
@@ -244,7 +244,7 @@ def main():
     (rankingProblemsELWC, rankingProblemsJSON) = bert_helper_json.convert_json_to_elwc(args.input_file)
 
     # Create an instance of the TFRBert client, to request predictions from the Tensorflow Serving model server
-    tfrBertClient = TFRBertClient(grpcChannel = "0.0.0.0:8500", modelName = "tfrbert", servingSignatureName = "serving_default", timeoutInSecs = 3)
+    tfrBertClient = TFRBertClient(grpcChannel = "0.0.0.0:8500", modelName = "tfrbert", servingSignatureName = "serving_default", timeoutInSecs = 100)
 
     # Generate predictions for each ranking problem in the list of ranking problems in the JSON file
     rankingProblemsOut = tfrBertClient.generatePredictionsList(rankingProblemsELWC, rankingProblemsJSON) 
