@@ -244,7 +244,7 @@ def main():
     (rankingProblemsELWC, rankingProblemsJSON) = bert_helper_json.convert_json_to_elwc(args.input_file)
 
     # Create an instance of the TFRBert client, to request predictions from the Tensorflow Serving model server
-    tfrBertClient = TFRBertClient(grpcChannel = "0.0.0.0:8500", modelName = "tfrbert", servingSignatureName = "serving_default", timeoutInSecs = 60)
+    tfrBertClient = TFRBertClient(grpcChannel = "0.0.0.0:8500", modelName = "tfrbert", servingSignatureName = "serving_default", timeoutInSecs = 100)
 
     # Generate predictions for each ranking problem in the list of ranking problems in the JSON file
     rankingProblemsOut = tfrBertClient.generatePredictionsList(rankingProblemsELWC, rankingProblemsJSON) 
